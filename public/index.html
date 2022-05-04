@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
   <link rel="stylesheet" href="styles/bootstrap-material-design.min.css">
+  <link rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
   <link rel="stylesheet" href="styles/main.css">
   <title>Cult Films</title>
 </head>
@@ -13,10 +14,12 @@
 <body>
   <nav class="navbar navbar-dark fixed-top">
     <a class="navbar-brand" href="#">Cult Films</a>
-    <a class="navbar-brand" id="isSignedIn" href="#">Sign In</a>
   </nav>
-  <div id="listPage" class="container page-container">
-    <div id="moviesContainer" class="rows justify-content-center"></div>
+  <div id="loginPage" class="container page-container">
+    <h1>Pleas Sign in to use Cult Films</h1>
+    <div id="firebaseui-auth-container"></div>
+    <button id="roseFireButton" type="button" class="btn">Sign in With Rosefire</button>
+  
 
   </div>
   <script src="scripts/jquery.min.js"></script>
@@ -25,9 +28,11 @@
   <script>$("body").bootstrapMaterialDesign();</script>
   <script src="/__/firebase/7.18.0/firebase-app.js"></script>
   <script src="/__/firebase/7.18.0/firebase-analytics.js"></script>
-  <script src="/__/firebase/7.18.0/firebase-auth.js"></script>
   <script src="/__/firebase/7.18.0/firebase-firestore.js"></script>
+  <script src="/__/firebase/7.18.0/firebase-auth.js"></script>
   <script src="/__/firebase/init.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+  <script src="scripts/rosefire.min.js"></script>
   <script src="scripts/main.js"></script>
 </body>
 
