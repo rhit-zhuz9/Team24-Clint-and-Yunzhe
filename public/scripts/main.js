@@ -74,12 +74,7 @@ rhit.ListPageController = class {
 				// 	console.log("true");
 				// }
 
-				firebase.firestore().collection(rhit.FB_COLLECTION_CULTFILMS).doc(movieId).get().then((doc) => {
-					const list = doc.data()[rhit.FB_KEY_WATCHLIST];
-					if(!list.includes(rhit.fbAuthManager.uid)){
-						rhit.fbFilmsManger.addToWatchList(movieId);
-					}
-				});
+				rhit.fbFilmsManger.addToWatchList(movieId);
 				
 			}
 		});
@@ -104,7 +99,7 @@ rhit.ListPageController = class {
 
 		const url = await this.getUrl(Movie.title);
 		
-		return htmlToElement(`<div class="pin col-3" id="${Movie.id}">
+		return htmlToElement(`<div class="pin col-md-3 col-sm-4 col-xs-6" id="${Movie.id}">
         <img src = "${url}" alt="${Movie.title}">
 		<p class="name">${Movie.title}</p>
 		<button type="button" class="btn addButton" data-movie-id = "${Movie.id}">Add</button>
@@ -164,9 +159,17 @@ rhit.FbFilmsManger = class {
 	}
 
 	addToWatchList(movieId){
-		this._ref.doc(movieId).update({
-			[rhit.FB_KEY_WATCHLIST]: firebase.firestore.FieldValue.arrayUnion(rhit.fbAuthManager.uid)
+
+		firebase.firestore().collection(rhit.FB_COLLECTION_CULTFILMS).doc(movieId).get().then((doc) => {
+			const list = doc.data()[rhit.FB_KEY_WATCHLIST];
+			if(!list.includes(rhit.fbAuthManager.uid)){
+				this._ref.doc(movieId).update({
+					[rhit.FB_KEY_WATCHLIST]: firebase.firestore.FieldValue.arrayUnion(rhit.fbAuthManager.uid)
+				});
+			}
 		});
+
+		
 	}
 
 	getWatchlist(movieId){
