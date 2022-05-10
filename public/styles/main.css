@@ -104,3 +104,26 @@ background-color: #DDDDDD;
     margin-bottom: 20px;
     text-align: center;
 }
+
+#userReview{
+    margin-top: 100px;
+}
+
+.rectangle{
+    width: 20px;
+    height: 32px;
+    background-color: #ffce44;
+    display: inline-block;
+    margin-right: 20px;
+}
+
+#reviewHeader{
+    display: inline-block;
+}
+
+#topReview{
+    background-color: #800000;
+    color: white;
+    border-radius: 20px;
+    padding: 20px;
+}
