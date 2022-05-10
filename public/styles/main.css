@@ -87,9 +87,6 @@ background-color: #DDDDDD;
     display: flex;
 }
 
-#infoPart1{
-}
-
 #infoPart2{
     margin-left: 30px;
     background-color: #800000;
@@ -126,4 +123,31 @@ background-color: #DDDDDD;
     color: white;
     border-radius: 20px;
     padding: 20px;
+}
+
+#reviewHeader > #poster{
+    width: 100px;
+    margin-right: 30px;
+}
+
+#reviewHeader{
+    display: flex;
+    padding: 20px;
+    color: white;
+}
+
+#reviewSection{
+    background-color: #800000;
+    border-radius: 20px;
+}
+
+#fab{
+    background-color: #ffce44;
+    color: black;
+    z-index: 999;
+}
+
+#fab:active{
+    transform: translateY(2px);
+    opacity: 0.8;
 }
