@@ -14,6 +14,7 @@ rhit.FB_KEY_TITLE = "title";
 rhit.FB_KEY_WATCHLIST = "watchlist";
 rhit.fbFilmsManger = null;
 rhit.fbAuthManager = null;
+rhit.fbSingleFilmManager = null;
 
 
 function htmlToElement(html) {
@@ -48,7 +49,7 @@ rhit.ListPageController = class {
 			const movie = rhit.fbFilmsManger.getFilmAtIndex(i);
 			const newCard = await this._createdCard(movie);
 			newCard.onclick = (event) => {
-				//window.location.href = `/singlePic.html?id=${pic.id}`;
+				window.location.href = `/movieDetail.html?id=${movie.id}`;
 			};
 			newList.appendChild(newCard);
 		}
@@ -164,15 +165,63 @@ rhit.FbFilmsManger = class {
 			[rhit.FB_KEY_WATCHLIST]: firebase.firestore.FieldValue.arrayUnion(rhit.fbAuthManager.uid)
 		});
 	}
-
-	getWatchlist(movieId){
-		firebase.firestore().collection(rhit.FB_COLLECTION_CULTFILMS).doc(movieId).get().then((doc) => {
-			return doc.data()[rhit.FB_KEY_WATCHLIST];
-		});
-	}
 }
 
+rhit.DetailPageController = class{
+	constructor(){
+		rhit.fbSingleFilmManager.beginListening(this.updateView.bind(this))
+	}
 
+	updateView(){
+		document.querySelector("#title").innerHTML = rhit.fbSingleFilmManager.title;
+		fetch(`////www.omdbapi.com/?apikey=5cb55cbf&t=${rhit.fbSingleFilmManager.title}`)
+   			.then(response => response.json())
+			.then(data =>{
+				console.log(data);
+				document.querySelector("#poster").src = data["Poster"];
+				document.querySelector("#poster").alt = rhit.fbSingleFilmManager.title;
+				document.querySelector("#plot").innerHTML = data["Plot"];
+				document.querySelector("#director").innerHTML = data["Director"];
+				document.querySelector("#actor").innerHTML = data["Actors"];
+				document.querySelector("#boxOffice").innerHTML = data["BoxOffice"];
+			})
+
+
+	}
+	
+}
+
+rhit.FbSingleFilmManger = class {
+	constructor(movieId) {
+		this._documentSnapshots = [];
+		this._ref = firebase.firestore().collection(rhit.FB_COLLECTION_CULTFILMS).doc(movieId);
+		this._unsubscribe = null;
+	}
+	beginListening(changeListener) {
+
+		this._unsubscribe = this._ref.onSnapshot((doc) => {
+			if (doc.exists) {
+				console.log("Document data:", doc.data());
+				this._documentSnapshot = doc;
+				changeListener();
+			} else {
+				console.log("No such document!");
+				//window.location.href = "/";
+			}
+		});
+	}
+	stopListening() {
+		this._unsubscribe();
+	}
+
+	delete() {
+		return this._ref.delete();
+	}
+
+	get title() {
+		return this._documentSnapshot.get(rhit.FB_KEY_TITLE);
+	}
+}
 
 rhit.loginPageController = class {
 	constructor() {
@@ -244,6 +293,15 @@ rhit.initializePage = function(){
 		const uid = urlParams.get('uid');
 		rhit.fbFilmsManger = new rhit.FbFilmsManger(uid);
 		new rhit.ListPageController();
+		
+	}
+
+	if (document.querySelector('#detailPage')) {
+		console.log("You are on the detail page.");
+		const id = urlParams.get('id');
+		console.log(id);
+		rhit.fbSingleFilmManager = new rhit.FbSingleFilmManger(id);
+		new rhit.DetailPageController();
 		
 	}
 }

@@ -83,4 +83,24 @@ background-color: #DDDDDD;
     border-radius: 5px;
 }
 
+#filmDetail{
+    display: flex;
+}
 
+#infoPart1{
+}
+
+#infoPart2{
+    margin-left: 30px;
+    background-color: #800000;
+    color: white;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+#filmDetail #title{
+    font-weight: bold;
+    font-size: 3em;
+    margin-bottom: 20px;
+    text-align: center;
+}
