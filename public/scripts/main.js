@@ -12,9 +12,15 @@ var rhit = rhit || {};
 rhit.FB_COLLECTION_CULTFILMS = "CultFilms";
 rhit.FB_KEY_TITLE = "title";
 rhit.FB_KEY_WATCHLIST = "watchlist";
+rhit.FB_COLLECTION_USERREVIEWS = "UserReviews"
+rhit.FB_KEY_CONTENT = "content";
+rhit.FB_KEY_FILMID_FOR_REVIEW = "filmId";
+rhit.FB_KEY_AUTHOR = "author";
+rhit.FB_KEY_LIKES = "likes";
 rhit.fbFilmsManger = null;
 rhit.fbAuthManager = null;
 rhit.fbSingleFilmManager = null;
+rhit.fbReviewManager = null;
 
 
 function htmlToElement(html) {
@@ -169,7 +175,24 @@ rhit.FbFilmsManger = class {
 
 rhit.DetailPageController = class{
 	constructor(){
-		rhit.fbSingleFilmManager.beginListening(this.updateView.bind(this))
+
+		document.querySelector("#menuShowAllMovies").onclick = (event) => {
+			window.location.href = "/list.html";
+		};
+
+		document.querySelector("#menuShowWatchlist").onclick = (event) =>{
+			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
+		};
+
+		document.querySelector("#menuSignOut").onclick = (event) => {
+			rhit.fbAuthManager.signOut();
+		};
+
+		document.querySelector("#reviewTitle").onclick = (event) => {
+			window.location.href = `/userReview.html?id=${rhit.fbSingleFilmManager.id}&t=${rhit.fbSingleFilmManager.title}`;
+		};
+		rhit.fbSingleFilmManager.beginListening(this.updateView.bind(this));
+		rhit.fbSingleFilmManager.beginListening2(this.updateTopReview.bind(this));
 	}
 
 	updateView(){
@@ -185,17 +208,21 @@ rhit.DetailPageController = class{
 				document.querySelector("#actor").innerHTML = data["Actors"];
 				document.querySelector("#boxOffice").innerHTML = data["BoxOffice"];
 			})
+	}
 
-
+	updateTopReview(content){
+		document.querySelector("#topReviewContent").innerHTML = content;
 	}
 	
 }
 
 rhit.FbSingleFilmManger = class {
 	constructor(movieId) {
+		this.movieId = movieId;
 		this._documentSnapshots = [];
 		this._ref = firebase.firestore().collection(rhit.FB_COLLECTION_CULTFILMS).doc(movieId);
 		this._unsubscribe = null;
+		this._ref2 = firebase.firestore().collection(rhit.FB_COLLECTION_USERREVIEWS)
 	}
 	beginListening(changeListener) {
 
@@ -210,6 +237,20 @@ rhit.FbSingleFilmManger = class {
 			}
 		});
 	}
+
+	beginListening2(changeListener){
+		let query = this._ref2.limit(1).where(rhit.FB_KEY_FILMID_FOR_REVIEW, "==", this.movieId).orderBy(rhit.FB_KEY_LIKES, "desc");
+		
+		this._unsubscribe = query.onSnapshot((querySnapshot) => {
+			if(querySnapshot.docs.length != 0){
+				const content = querySnapshot.docs[0].get(rhit.FB_KEY_CONTENT);
+				changeListener(content);
+			}else{
+				changeListener(null);
+			}
+			
+		});
+	}
 	stopListening() {
 		this._unsubscribe();
 	}
@@ -220,6 +261,10 @@ rhit.FbSingleFilmManger = class {
 
 	get title() {
 		return this._documentSnapshot.get(rhit.FB_KEY_TITLE);
+	}
+
+	get id(){
+		return this.movieId;
 	}
 }
 
@@ -274,6 +319,157 @@ rhit.FbAuthManager = class {
 
 }
 
+rhit.Review = class {
+	constructor(id, filmId, content, likes) {
+		this.id = id;
+		this.filmId = filmId;
+		this.content = content;
+		this.likes = likes
+	}
+}
+
+rhit.ReviewPageController = class {
+	constructor(){
+		document.querySelector("#menuShowAllMovies").onclick = (event) => {
+			window.location.href = "/list.html";
+		}
+
+		document.querySelector("#menuShowWatchlist").onclick = (event) =>{
+			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
+		}
+
+		document.querySelector("#menuSignOut").onclick = (event) => {
+			rhit.fbAuthManager.signOut();
+		}
+
+		$("#addReviewDialog").on("show.bs.modal", (event) => {
+			//pre animation
+			document.querySelector("#inputContent").value = "";
+		});
+
+		$("#addReviewDialog").on("shown.bs.modal", (event) => {
+			//post animation
+			document.querySelector("#inputContent").focus();
+		});
+
+		document.querySelector("#submitAddReview").addEventListener("click", (event) => {
+			const content = document.querySelector("#inputContent").value;
+			rhit.fbReviewManager.add(content);
+		});
+
+		
+
+		rhit.fbReviewManager.beginListening(this.updateView.bind(this))
+	}
+
+	updateView(){
+		document.querySelector('#title').innerHTML = rhit.fbReviewManager.title;
+		fetch(`////www.omdbapi.com/?apikey=5cb55cbf&t=${rhit.fbReviewManager.title}`)
+   			.then(response => response.json())
+			.then(data =>{
+				// console.log(data);
+				document.querySelector("#poster").src = data["Poster"];
+			})
+		const newList = htmlToElement('<div id="reviewsContainer"></div>');
+		for (let i = 0; i < rhit.fbReviewManager.length; i++) {
+			const review = rhit.fbReviewManager.getReviewAtIndex(i);
+			const newCard = this._createdCard(review);
+			newCard.onclick = (event) => {
+				//window.location.href = `/movieDetail.html?id=${movie.id}`;
+			};
+			newList.appendChild(newCard);
+		}
+
+		const oldList = document.querySelector("#reviewsContainer");
+		oldList.removeAttribute("id");
+		oldList.hidden = true;
+		oldList.parentElement.appendChild(newList);
+
+		const likeButtons = document.querySelectorAll(".like-button");
+		likeButtons.forEach((button) => {
+			button.onclick = (event) => {
+				const reviewId = button.dataset.reviewId;
+				const likesNum = button.dataset.likesNum;
+				rhit.fbReviewManager.incLikes(reviewId, likesNum)
+			}})
+	}
+
+	_createdCard(review){
+		return htmlToElement(`<div id="${review.id}" class="review-content"><p>${review.content}</p><p class="likes">
+		<i class="material-icons like-button" data-review-id="${review.id}" data-likes-num=${review.likes}>favorite</i>&nbsp;&nbsp;${review.likes}</p></div>`);
+	}
+}
+
+
+
+rhit.FbReviewManager = class{
+	constructor(movieId, movieTitle){
+		this.id = movieId;
+		this.title = movieTitle;
+		this._documentSnapshots = [];
+		this._ref = firebase.firestore().collection(rhit.FB_COLLECTION_USERREVIEWS);
+		this._unsubscribe = null;
+	}
+
+	beginListening(changeListener) {
+		let query = this._ref.limit(40).where(rhit.FB_KEY_FILMID_FOR_REVIEW, "==", this.id).orderBy(rhit.FB_KEY_LIKES, "desc");
+		
+		this._unsubscribe = query.onSnapshot((querySnapshot) => {
+			this._documentSnapshots = querySnapshot.docs;
+			// querySnapshot.forEach((doc) => {
+			// 	console.log(doc.data());\\\\
+			// });
+			changeListener();
+		});
+	}
+	stopListening() {
+		this._unsubscribe();
+	}
+
+	getReviewAtIndex(index) {
+		const docSnapshot = this._documentSnapshots[index];
+		const review = new rhit.Review(
+			docSnapshot.id,
+			docSnapshot.get(rhit.FB_KEY_FILMID_FOR_REVIEW),
+			docSnapshot.get(rhit.FB_KEY_CONTENT),
+			docSnapshot.get(rhit.FB_KEY_LIKES)
+		);
+		return review;
+	}
+
+	incLikes(id, likesNum){
+		const output = parseInt(likesNum)+1;
+		this._ref.doc(id).update({
+			[rhit.FB_KEY_LIKES]: output
+		}).then(() => {
+			console.log("Document successfully updated!");
+		})
+		.catch((error) => {
+			// The document probably doesn't exist.
+			console.error("Error updating document: ", error);
+		});
+	}
+
+	add(content) {
+		this._ref.add({
+			[rhit.FB_KEY_CONTENT]: content,
+			[rhit.FB_KEY_FILMID_FOR_REVIEW]: this.id,
+			[rhit.FB_KEY_AUTHOR]: rhit.fbAuthManager.uid,
+			[rhit.FB_KEY_LIKES]: 0
+		})
+			.then(function (docRef) {
+				console.log("Document written with ID: ", docRef.id)
+			})
+			.catch(function (error) {
+				console.error("Error adding document: ", error)
+			});
+	}
+
+	get length() {
+		return this._documentSnapshots.length;
+	}
+
+}
 
 rhit.initializePage = function(){
 
@@ -303,6 +499,15 @@ rhit.initializePage = function(){
 		rhit.fbSingleFilmManager = new rhit.FbSingleFilmManger(id);
 		new rhit.DetailPageController();
 		
+	}
+
+	if(document.querySelector('#reviewPage')){
+		console.log("You are on the review page.");
+		const id = urlParams.get('id');
+		const title = urlParams.get('t');
+		console.log(id);
+		rhit.fbReviewManager = new rhit.FbReviewManager(id, title);
+		new rhit.ReviewPageController();
 	}
 }
 

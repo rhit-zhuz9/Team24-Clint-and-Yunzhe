@@ -125,12 +125,12 @@ background-color: #DDDDDD;
     padding: 20px;
 }
 
-#reviewHeader > #poster{
+#reviewHeading > #poster{
     width: 100px;
     margin-right: 30px;
 }
 
-#reviewHeader{
+#reviewHeading{
     display: flex;
     padding: 20px;
     color: white;
@@ -139,6 +139,7 @@ background-color: #DDDDDD;
 #reviewSection{
     background-color: #800000;
     border-radius: 20px;
+    padding: 30px;
 }
 
 #fab{
@@ -150,4 +151,15 @@ background-color: #DDDDDD;
 #fab:active{
     transform: translateY(2px);
     opacity: 0.8;
+}
+
+.review-content{
+    background-color: #DDDDDD;
+    border-radius: 20px;
+    padding: 20px;
+    margin: 20px 0px;
+}
+
+.likes{
+    text-align: right;
 }
