@@ -171,3 +171,7 @@ background-color: #DDDDDD;
     position: absolute;
     right: 10px;
 }
+
+#menuDelete, #menuEdit{
+    display: none;
+}

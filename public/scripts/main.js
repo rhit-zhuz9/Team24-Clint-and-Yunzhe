@@ -486,11 +486,45 @@ rhit.FbReviewManager = class{
 
 rhit.reviewDetailController = class{
 	constructor(){
+
+		document.querySelector("#submitEditContent").addEventListener("click", (event) => {
+			const content = document.querySelector("#inputContent").value;
+			rhit.fbReviewDetailManger.update(content);
+		});
+
+
+		$("#editContentDialog").on("show.bs.modal", (event) => {
+			//pre animation
+			document.querySelector("#inputContent").value = rhit.fbReviewDetailManger.content;
+		});
+
+		$("#editContentDialog").on("shown.bs.modal", (event) => {
+			//post animation
+			document.querySelector("#inputContent").focus();
+		});
+
+		document.querySelector("#menuSignOut").onclick = (event) => {
+			rhit.fbAuthManager.signOut();
+		};
+
+		document.querySelector("#submitDeleteContent").addEventListener("click", (event) => {
+			rhit.fbReviewDetailManger.delete().then(() => {
+				console.log("Document successfully deleted!");
+				window.location.href = "/list.html";
+			}).catch((error) => {
+				console.error("Error removing document: ", error);
+			});
+		});
+
 		rhit.fbReviewDetailManger.beginListening(this.updateView.bind(this));
 	}
 
 	updateView(){
 		document.querySelector("#reviewContent").innerHTML = rhit.fbReviewDetailManger.content;
+		if(rhit.fbReviewDetailManger.author == rhit.fbAuthManager.uid){
+			document.querySelector("#menuEdit").style.display = "flex";
+			document.querySelector("#menuDelete").style.display = "flex";
+		}
 	}
 }
 
@@ -516,8 +550,30 @@ rhit.FbReviewDetailManager = class{
 	stopListening() {
 		this._unsubscribe();
 	}
+
+	update(content){
+		this._ref.update({
+			[rhit.FB_KEY_CONTENT]: content,
+		})
+			.then(() => {
+				console.log("Document successfully updated!");
+			})
+			.catch((error) => {
+				// The document probably doesn't exist.
+				console.error("Error updating document: ", error);
+			});
+	}
+
+	delete(){
+		return this._ref.delete();
+	}
+
 	get content(){
 		return this._documentSnapshot.get(rhit.FB_KEY_CONTENT);
+	}
+
+	get author(){
+		return this._documentSnapshot.get(rhit.FB_KEY_AUTHOR);
 	}
 }
 
