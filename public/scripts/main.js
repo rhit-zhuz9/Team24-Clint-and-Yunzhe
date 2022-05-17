@@ -174,6 +174,17 @@ rhit.FbFilmsManger = class {
 		return this._documentSnapshots.length;
 	}
 
+	addMovie(title){
+		this._ref.add({
+			[rhit.FB_KEY_TITLE]: title
+		}).then(function (docRef) {
+			console.log("Document written with ID: ", docRef.id)
+		})
+		.catch(function (error) {
+			console.error("Error adding document: ", error)
+		});
+	}
+
 	getFilmAtIndex(index) {
 		const docSnapshot = this._documentSnapshots[index];
 		if (docSnapshot.get("watchlist") == null) {
