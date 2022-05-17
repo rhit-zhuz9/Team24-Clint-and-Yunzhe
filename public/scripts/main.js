@@ -66,25 +66,24 @@ rhit.ListPageController = class {
 		oldList.parentElement.appendChild(newList);
 		const buttons = document.querySelectorAll(".addButton");
 		buttons.forEach((button) => {
-			button.onclick = async (event) => {
-				const movieId = button.dataset.movieId;
-				// rhit.fbFilmsManger.inWatchList(movieId).then((result) => {
-				// 	console.log(result);
-				// });
-				// const newList = await rhit.fbFilmsManger.getWatchlist(movieId);
-				// if(newList.includes(rhit.fbAuthManager.uid)){
-				// 	console.log("true");
-				// }
-				console.log(button.innerHTML);
-				if (button.innerHTML == "Add") button.innerHTML = "Remove";
-				firebase.firestore().collection(rhit.FB_COLLECTION_CULTFILMS).doc(movieId).get().then((doc) => {
-					const list = doc.data()[rhit.FB_KEY_WATCHLIST];
-					if(!list.includes(rhit.fbAuthManager.uid)){
+			const movieId = button.dataset.movieId;
+			firebase.firestore().collection(rhit.FB_COLLECTION_CULTFILMS).doc(movieId).get().then((doc) => {
+				const list = doc.data()[rhit.FB_KEY_WATCHLIST];
+				if(list.includes(rhit.fbAuthManager.uid)){
+					button.innerHTML = "Remove";
+					button.style.background = 'grey';
+					button.onclick = (event) => {
+						rhit.fbFilmsManger.removeFromWatchList(movieId);
+					}
+				}else{
+					button.innerHTML = "Add";
+					button.style.background = '#ff5c00';
+					button.onclick = (event) => {
 						rhit.fbFilmsManger.addToWatchList(movieId);
 					}
-				});
-				
-			}
+				}
+			});
+
 		});
 	
 	}
@@ -169,6 +168,12 @@ rhit.FbFilmsManger = class {
 	addToWatchList(movieId){
 		this._ref.doc(movieId).update({
 			[rhit.FB_KEY_WATCHLIST]: firebase.firestore.FieldValue.arrayUnion(rhit.fbAuthManager.uid)
+		});
+	}
+
+	removeFromWatchList(movieId){
+		this._ref.doc(movieId).update({
+			[rhit.FB_KEY_WATCHLIST]: firebase.firestore.FieldValue.arrayRemove(rhit.fbAuthManager.uid)
 		});
 	}
 }
