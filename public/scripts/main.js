@@ -37,7 +37,7 @@ rhit.ListPageController = class {
 			window.location.href = "/list.html";
 		}
 
-		document.querySelector("#menuShowWatchlist").onclick = (event) =>{
+		document.querySelector("#menuShowWatchlist").onclick = (event) => {
 			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
 		}
 
@@ -45,8 +45,20 @@ rhit.ListPageController = class {
 			rhit.fbAuthManager.signOut();
 		}
 
+		document.querySelector("#search").onkeypress = (event) => {
+			if(event.key == 'Enter'){
+				window.location.href = `/list.html?title=${document.querySelector("#search").value}`;
+			}
+		}
+
+		$(function () {
+			$('#collapse-search').on('hidden.bs.collapse', function () {
+				$('#search').val('')
+			})
+		});
+
 		rhit.fbFilmsManger.beginListening(this.updateList.bind(this))
-		
+
 	}
 
 	async updateList() {
@@ -69,13 +81,13 @@ rhit.ListPageController = class {
 			const movieId = button.dataset.movieId;
 			firebase.firestore().collection(rhit.FB_COLLECTION_CULTFILMS).doc(movieId).get().then((doc) => {
 				const list = doc.data()[rhit.FB_KEY_WATCHLIST];
-				if(list.includes(rhit.fbAuthManager.uid)){
+				if (list.includes(rhit.fbAuthManager.uid)) {
 					button.innerHTML = "Remove";
 					button.style.background = 'grey';
 					button.onclick = (event) => {
 						rhit.fbFilmsManger.removeFromWatchList(movieId);
 					}
-				}else{
+				} else {
 					button.innerHTML = "Add";
 					button.style.background = '#ff5c00';
 					button.onclick = (event) => {
@@ -93,7 +105,7 @@ rhit.ListPageController = class {
 			}
 		});
 
-	
+
 	}
 
 	async getUrl(title) {
@@ -102,7 +114,7 @@ rhit.ListPageController = class {
 		const data = await response.json();
 		//console.log('Response data:', data);
 		if (data["Response"] == "True" && data["Poster"].length > 5) {
-       		return data["Poster"];
+			return data["Poster"];
 
 		} else {
 			console.log("Missing poster data.  Do nothing.");
@@ -113,7 +125,7 @@ rhit.ListPageController = class {
 	async _createdCard(Movie) {
 
 		const url = await this.getUrl(Movie.title);
-		
+
 		return htmlToElement(`<div class="pin col-6 col-md-4 col-xl-3">
         <img class="moviePoster" src = "${url}" alt="${Movie.title}" id="${Movie.id}">
 		<p class="name">${Movie.title}</p>
@@ -130,17 +142,20 @@ rhit.Movie = class {
 }
 
 rhit.FbFilmsManger = class {
-	constructor(uid) {
+	constructor(uid, title) {
 		console.log("created movie manager");
 		this._uid = uid;
+		this._title = title;
 		this._documentSnapshots = [];
 		this._ref = firebase.firestore().collection(rhit.FB_COLLECTION_CULTFILMS);
 		this._unsubscribe = null;
 	}
 	beginListening(changeListener) {
 		let query = this._ref.limit(40);
-		if(this._uid){
+		if (this._uid) {
 			query = query.where(rhit.FB_KEY_WATCHLIST, "array-contains", this._uid);
+		}else if(this._title){
+			query = query.where(rhit.FB_KEY_TITLE, "==", this._title);
 		}
 		this._unsubscribe = query.onSnapshot((querySnapshot) => {
 			this._documentSnapshots = querySnapshot.docs;
@@ -161,9 +176,9 @@ rhit.FbFilmsManger = class {
 
 	getFilmAtIndex(index) {
 		const docSnapshot = this._documentSnapshots[index];
-		if(docSnapshot.get("watchlist") == null){
+		if (docSnapshot.get("watchlist") == null) {
 			this._ref.doc(docSnapshot.id).update({
-				[rhit.FB_KEY_WATCHLIST]: [] 
+				[rhit.FB_KEY_WATCHLIST]: []
 			});
 		}
 		const movie = new rhit.Movie(
@@ -173,27 +188,27 @@ rhit.FbFilmsManger = class {
 		return movie;
 	}
 
-	addToWatchList(movieId){
+	addToWatchList(movieId) {
 		this._ref.doc(movieId).update({
 			[rhit.FB_KEY_WATCHLIST]: firebase.firestore.FieldValue.arrayUnion(rhit.fbAuthManager.uid)
 		});
 	}
 
-	removeFromWatchList(movieId){
+	removeFromWatchList(movieId) {
 		this._ref.doc(movieId).update({
 			[rhit.FB_KEY_WATCHLIST]: firebase.firestore.FieldValue.arrayRemove(rhit.fbAuthManager.uid)
 		});
 	}
 }
 
-rhit.DetailPageController = class{
-	constructor(){
+rhit.DetailPageController = class {
+	constructor() {
 
 		document.querySelector("#menuShowAllMovies").onclick = (event) => {
 			window.location.href = "/list.html";
 		};
 
-		document.querySelector("#menuShowWatchlist").onclick = (event) =>{
+		document.querySelector("#menuShowWatchlist").onclick = (event) => {
 			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
 		};
 
@@ -208,11 +223,11 @@ rhit.DetailPageController = class{
 		rhit.fbSingleFilmManager.beginListening2(this.updateTopReview.bind(this));
 	}
 
-	updateView(){
+	updateView() {
 		document.querySelector("#title").innerHTML = rhit.fbSingleFilmManager.title;
 		fetch(`////www.omdbapi.com/?apikey=5cb55cbf&t=${rhit.fbSingleFilmManager.title}`)
-   			.then(response => response.json())
-			.then(data =>{
+			.then(response => response.json())
+			.then(data => {
 				console.log(data);
 				document.querySelector("#poster").src = data["Poster"];
 				document.querySelector("#poster").alt = rhit.fbSingleFilmManager.title;
@@ -223,10 +238,10 @@ rhit.DetailPageController = class{
 			})
 	}
 
-	updateTopReview(content){
+	updateTopReview(content) {
 		document.querySelector("#topReviewContent").innerHTML = content;
 	}
-	
+
 }
 
 rhit.FbSingleFilmManger = class {
@@ -251,17 +266,17 @@ rhit.FbSingleFilmManger = class {
 		});
 	}
 
-	beginListening2(changeListener){
+	beginListening2(changeListener) {
 		let query = this._ref2.limit(1).where(rhit.FB_KEY_FILMID_FOR_REVIEW, "==", this.movieId).orderBy(rhit.FB_KEY_LIKES, "desc");
-		
+
 		this._unsubscribe = query.onSnapshot((querySnapshot) => {
-			if(querySnapshot.docs.length != 0){
+			if (querySnapshot.docs.length != 0) {
 				const content = querySnapshot.docs[0].get(rhit.FB_KEY_CONTENT);
 				changeListener(content);
-			}else{
+			} else {
 				changeListener(null);
 			}
-			
+
 		});
 	}
 	stopListening() {
@@ -276,7 +291,7 @@ rhit.FbSingleFilmManger = class {
 		return this._documentSnapshot.get(rhit.FB_KEY_TITLE);
 	}
 
-	get id(){
+	get id() {
 		return this.movieId;
 	}
 }
@@ -342,12 +357,12 @@ rhit.Review = class {
 }
 
 rhit.ReviewPageController = class {
-	constructor(){
+	constructor() {
 		document.querySelector("#menuShowAllMovies").onclick = (event) => {
 			window.location.href = "/list.html";
 		}
 
-		document.querySelector("#menuShowWatchlist").onclick = (event) =>{
+		document.querySelector("#menuShowWatchlist").onclick = (event) => {
 			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
 		}
 
@@ -370,16 +385,16 @@ rhit.ReviewPageController = class {
 			rhit.fbReviewManager.add(content);
 		});
 
-		
+
 
 		rhit.fbReviewManager.beginListening(this.updateView.bind(this))
 	}
 
-	updateView(){
+	updateView() {
 		document.querySelector('#title').innerHTML = rhit.fbReviewManager.title;
 		fetch(`////www.omdbapi.com/?apikey=5cb55cbf&t=${rhit.fbReviewManager.title}`)
-   			.then(response => response.json())
-			.then(data =>{
+			.then(response => response.json())
+			.then(data => {
 				// console.log(data);
 				document.querySelector("#poster").src = data["Poster"];
 			})
@@ -404,10 +419,11 @@ rhit.ReviewPageController = class {
 				const reviewId = button.dataset.reviewId;
 				const likesNum = button.dataset.likesNum;
 				rhit.fbReviewManager.incLikes(reviewId, likesNum)
-			}})
+			}
+		})
 	}
 
-	_createdCard(review){
+	_createdCard(review) {
 		return htmlToElement(`<div class="review-content"><p id="${review.id}">${review.content}</p><p class="likes">
 		<i class="material-icons like-button" data-review-id="${review.id}" data-likes-num=${review.likes}>favorite</i>&nbsp;&nbsp;${review.likes}</p></div>`);
 	}
@@ -415,8 +431,8 @@ rhit.ReviewPageController = class {
 
 
 
-rhit.FbReviewManager = class{
-	constructor(movieId, movieTitle){
+rhit.FbReviewManager = class {
+	constructor(movieId, movieTitle) {
 		this.id = movieId;
 		this.title = movieTitle;
 		this._documentSnapshots = [];
@@ -426,7 +442,7 @@ rhit.FbReviewManager = class{
 
 	beginListening(changeListener) {
 		let query = this._ref.limit(40).where(rhit.FB_KEY_FILMID_FOR_REVIEW, "==", this.id).orderBy(rhit.FB_KEY_LIKES, "desc");
-		
+
 		this._unsubscribe = query.onSnapshot((querySnapshot) => {
 			this._documentSnapshots = querySnapshot.docs;
 			// querySnapshot.forEach((doc) => {
@@ -450,17 +466,17 @@ rhit.FbReviewManager = class{
 		return review;
 	}
 
-	incLikes(id, likesNum){
-		const output = parseInt(likesNum)+1;
+	incLikes(id, likesNum) {
+		const output = parseInt(likesNum) + 1;
 		this._ref.doc(id).update({
 			[rhit.FB_KEY_LIKES]: output
 		}).then(() => {
 			console.log("Document successfully updated!");
 		})
-		.catch((error) => {
-			// The document probably doesn't exist.
-			console.error("Error updating document: ", error);
-		});
+			.catch((error) => {
+				// The document probably doesn't exist.
+				console.error("Error updating document: ", error);
+			});
 	}
 
 	add(content) {
@@ -484,8 +500,8 @@ rhit.FbReviewManager = class{
 
 }
 
-rhit.reviewDetailController = class{
-	constructor(){
+rhit.reviewDetailController = class {
+	constructor() {
 
 		document.querySelector("#submitEditContent").addEventListener("click", (event) => {
 			const content = document.querySelector("#inputContent").value;
@@ -516,20 +532,28 @@ rhit.reviewDetailController = class{
 			});
 		});
 
+		document.querySelector("#menuShowAllMovies").onclick = (event) => {
+			window.location.href = "/list.html";
+		};
+
+		document.querySelector("#menuShowWatchlist").onclick = (event) => {
+			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
+		};
+
 		rhit.fbReviewDetailManger.beginListening(this.updateView.bind(this));
 	}
 
-	updateView(){
+	updateView() {
 		document.querySelector("#reviewContent").innerHTML = rhit.fbReviewDetailManger.content;
-		if(rhit.fbReviewDetailManger.author == rhit.fbAuthManager.uid){
+		if (rhit.fbReviewDetailManger.author == rhit.fbAuthManager.uid) {
 			document.querySelector("#menuEdit").style.display = "flex";
 			document.querySelector("#menuDelete").style.display = "flex";
 		}
 	}
 }
 
-rhit.FbReviewDetailManager = class{
-	constructor(reviewId){
+rhit.FbReviewDetailManager = class {
+	constructor(reviewId) {
 		this._documentSnapshot = {};
 		this._unsubscribe = null;
 		this._ref = firebase.firestore().collection(rhit.FB_COLLECTION_USERREVIEWS).doc(reviewId);
@@ -551,7 +575,7 @@ rhit.FbReviewDetailManager = class{
 		this._unsubscribe();
 	}
 
-	update(content){
+	update(content) {
 		this._ref.update({
 			[rhit.FB_KEY_CONTENT]: content,
 		})
@@ -564,23 +588,23 @@ rhit.FbReviewDetailManager = class{
 			});
 	}
 
-	delete(){
+	delete() {
 		return this._ref.delete();
 	}
 
-	get content(){
+	get content() {
 		return this._documentSnapshot.get(rhit.FB_KEY_CONTENT);
 	}
 
-	get author(){
+	get author() {
 		return this._documentSnapshot.get(rhit.FB_KEY_AUTHOR);
 	}
 }
 
-rhit.initializePage = function(){
+rhit.initializePage = function () {
 
 	const urlParams = new URLSearchParams(window.location.search);
-	
+
 	if (document.querySelector('#loginPage')) {
 		console.log("You are on the login page");
 
@@ -593,9 +617,10 @@ rhit.initializePage = function(){
 	if (document.querySelector('#listPage')) {
 		console.log("You are on the list page.");
 		const uid = urlParams.get('uid');
-		rhit.fbFilmsManger = new rhit.FbFilmsManger(uid);
+		const title = urlParams.get('title');
+		rhit.fbFilmsManger = new rhit.FbFilmsManger(uid, title);
 		new rhit.ListPageController();
-		
+
 	}
 
 	if (document.querySelector('#detailPage')) {
@@ -604,10 +629,10 @@ rhit.initializePage = function(){
 		console.log(id);
 		rhit.fbSingleFilmManager = new rhit.FbSingleFilmManger(id);
 		new rhit.DetailPageController();
-		
+
 	}
 
-	if(document.querySelector('#reviewPage')){
+	if (document.querySelector('#reviewPage')) {
 		console.log("You are on the review page.");
 		const id = urlParams.get('id');
 		const title = urlParams.get('t');
@@ -616,7 +641,7 @@ rhit.initializePage = function(){
 		new rhit.ReviewPageController();
 	}
 
-	if(document.querySelector('#reviewDetailPage')){
+	if (document.querySelector('#reviewDetailPage')) {
 		console.log("You are on the review detail page");
 		const id = urlParams.get('id');
 		rhit.fbReviewDetailManger = new rhit.FbReviewDetailManager(id);
