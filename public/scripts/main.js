@@ -21,7 +21,7 @@ rhit.fbFilmsManger = null;
 rhit.fbAuthManager = null;
 rhit.fbSingleFilmManager = null;
 rhit.fbReviewManager = null;
-
+rhit.fbReviewDetailManger = null;
 
 function htmlToElement(html) {
 	var template = document.createElement('template');
@@ -55,7 +55,7 @@ rhit.ListPageController = class {
 			const movie = rhit.fbFilmsManger.getFilmAtIndex(i);
 			const newCard = await this._createdCard(movie);
 			newCard.onclick = (event) => {
-				window.location.href = `/movieDetail.html?id=${movie.id}`;
+				//window.location.href = `/movieDetail.html?id=${movie.id}`;
 			};
 			newList.appendChild(newCard);
 		}
@@ -85,6 +85,14 @@ rhit.ListPageController = class {
 			});
 
 		});
+
+		const posters = document.querySelectorAll(".moviePoster");
+		posters.forEach((poster) => {
+			poster.onclick = (event) => {
+				window.location.href = `/movieDetail.html?id=${poster.id}`;
+			}
+		});
+
 	
 	}
 
@@ -106,8 +114,8 @@ rhit.ListPageController = class {
 
 		const url = await this.getUrl(Movie.title);
 		
-		return htmlToElement(`<div class="pin col-11 col-md-5 col-xl-3" id="${Movie.id}">
-        <img src = "${url}" alt="${Movie.title}">
+		return htmlToElement(`<div class="pin col-6 col-md-4 col-xl-3">
+        <img class="moviePoster" src = "${url}" alt="${Movie.title}" id="${Movie.id}">
 		<p class="name">${Movie.title}</p>
 		<button type="button" class="btn addButton" data-movie-id = "${Movie.id}">Add</button>
       </div>`);
@@ -380,7 +388,7 @@ rhit.ReviewPageController = class {
 			const review = rhit.fbReviewManager.getReviewAtIndex(i);
 			const newCard = this._createdCard(review);
 			newCard.onclick = (event) => {
-				//window.location.href = `/movieDetail.html?id=${movie.id}`;
+				window.location.href = `/reviewDetail.html?id=${review.id}`;
 			};
 			newList.appendChild(newCard);
 		}
@@ -400,7 +408,7 @@ rhit.ReviewPageController = class {
 	}
 
 	_createdCard(review){
-		return htmlToElement(`<div id="${review.id}" class="review-content"><p>${review.content}</p><p class="likes">
+		return htmlToElement(`<div class="review-content"><p id="${review.id}">${review.content}</p><p class="likes">
 		<i class="material-icons like-button" data-review-id="${review.id}" data-likes-num=${review.likes}>favorite</i>&nbsp;&nbsp;${review.likes}</p></div>`);
 	}
 }
@@ -476,6 +484,43 @@ rhit.FbReviewManager = class{
 
 }
 
+rhit.reviewDetailController = class{
+	constructor(){
+		rhit.fbReviewDetailManger.beginListening(this.updateView.bind(this));
+	}
+
+	updateView(){
+		document.querySelector("#reviewContent").innerHTML = rhit.fbReviewDetailManger.content;
+	}
+}
+
+rhit.FbReviewDetailManager = class{
+	constructor(reviewId){
+		this._documentSnapshot = {};
+		this._unsubscribe = null;
+		this._ref = firebase.firestore().collection(rhit.FB_COLLECTION_USERREVIEWS).doc(reviewId);
+	}
+
+	beginListening(changeListener) {
+
+		this._unsubscribe = this._ref.onSnapshot((doc) => {
+			if (doc.exists) {
+				this._documentSnapshot = doc;
+				changeListener();
+			} else {
+				console.log("No such document!");
+				//window.location.href = "/";
+			}
+		});
+	}
+	stopListening() {
+		this._unsubscribe();
+	}
+	get content(){
+		return this._documentSnapshot.get(rhit.FB_KEY_CONTENT);
+	}
+}
+
 rhit.initializePage = function(){
 
 	const urlParams = new URLSearchParams(window.location.search);
@@ -513,6 +558,13 @@ rhit.initializePage = function(){
 		console.log(id);
 		rhit.fbReviewManager = new rhit.FbReviewManager(id, title);
 		new rhit.ReviewPageController();
+	}
+
+	if(document.querySelector('#reviewDetailPage')){
+		console.log("You are on the review detail page");
+		const id = urlParams.get('id');
+		rhit.fbReviewDetailManger = new rhit.FbReviewDetailManager(id);
+		new rhit.reviewDetailController();
 	}
 }
 

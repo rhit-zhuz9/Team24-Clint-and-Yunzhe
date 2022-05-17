@@ -153,7 +153,7 @@ background-color: #DDDDDD;
 }
 
 .review-content{
-    background-color: #DDDDDD;
+    background-color: white;
     border-radius: 20px;
     padding: 20px;
     margin: 20px 0px;
@@ -161,4 +161,13 @@ background-color: #DDDDDD;
 
 .likes{
     text-align: right;
+}
+
+.dropdown-menu-right{
+    left: -128px;
+}
+
+.dropdown{
+    position: absolute;
+    right: 10px;
 }
