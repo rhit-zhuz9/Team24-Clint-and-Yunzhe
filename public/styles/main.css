@@ -184,3 +184,15 @@ background-color: #DDDDDD;
 #menuDelete, #menuEdit{
     display: none;
 }
+
+.card {
+    margin: 10px 0;
+}
+
+#listPage .card-title,
+#listPage .card-subtitle {
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+    text-overflow: ellipsis;
+}

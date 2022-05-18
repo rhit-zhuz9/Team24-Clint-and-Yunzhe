@@ -80,6 +80,8 @@ rhit.communityController = class {
 			// Post animation
 			document.querySelector("#inputContent").focus();
 		});
+
+		rhit.fbCommunityManager.beginListening(this.updateList.bind(this));
 	}
 
 	updateList() {
@@ -110,7 +112,7 @@ rhit.communityController = class {
 		oldList.parentElement.appendChild(newList);
 	}
 
-	_createCard(movieQuote) {
+	_createCard(CommunityPost) {
 		return htmlToElement(`<div class="card">
 		<div class="card-body">
 			<h5 class="card-title">${CommunityPost.title}</h5>
