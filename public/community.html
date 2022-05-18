@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
   <link rel="stylesheet" href="styles/bootstrap-material-design.min.css">
   <link rel="stylesheet" href="styles/main.css">
-  <title>Cult Films</title>
+  <title>Community</title>
 </head>
 
 <body>
@@ -19,20 +19,12 @@
           <span class="sr-only">Toggle drawer</span>
           <i class="material-icons">menu</i>
         </button>
-        <a class="navbar-brand" href="/list.html">&nbsp;&nbsp;Cult Films</a>
-        <div class="bmd-form-group bmd-collapse-inline pull-xs-right">
-          <button class="btn bmd-btn-icon" for="search" data-toggle="collapse" data-target="#collapse-search" aria-expanded="false" aria-controls="collapse-search">
-            <i class="material-icons">search</i>
-          </button>  
-          <span id="collapse-search" class="collapse">
-            <input class="form-control" type="text" id="search" placeholder="Enter your query...">
-          </span>
-        </div>
+        <a class="navbar-brand" href="#">&nbsp;&nbsp;Community</a>
       </div>
     </header>
     <div id="dw-s2" class="bmd-layout-drawer bg-faded">
       <header>
-        <a class="navbar-brand">Cult Films</a>
+        <a class="navbar-brand">Community</a>
       </header>
       <ul class="list-group">
         <a id="menuShowAllMovies" class="list-group-item"><i class="material-icons">people</i>Show all Movies</a>
@@ -42,25 +34,57 @@
       </ul>
     </div>
     <main class="bmd-layout-content">
-      <div id="listPage" class="container page-container">
-        <div id="moviesContainer" class="rows justify-content-center"></div>
-    
+      <div id="community" class="container page-container">
+        <div id="userSpecificHeading"></div>
+        <div id="quoteListContainer"></div>
       </div>
     </main>
   </div>
 
+  <button id="fab" type="button" class="btn bmd-btn-fab" data-toggle="modal" data-target="#addQuoteDialog">
+    <i class="material-icons">add</i>
+  </button>
 
-  
+
+  <!-- Modals -->
+  <div class="modal fade" id="addQuoteDialog" tabindex="-1" role="dialog" aria-labelledby="Add quote dialog"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Post</h5>
+        </div>
+        <div class="modal-body">
+          <div class="form-group bmd-form-group">
+            <label for="inputQuote" class="bmd-label-floating">Title</label>
+            <input type="text" class="form-control" id="inputQuote">
+          </div>
+          <div class="form-group bmd-form-group">
+            <label for="inputMovie" class="bmd-label-floating">Content</label>
+            <input type="text" class="form-control" id="inputMovie">
+            <span class="bmd-help">Add a post</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">CANCEL</button>
+          <button id="submitAddQuote" type="button" class="btn btn-primary" data-dismiss="modal">CREATE</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <script src="scripts/jquery.min.js"></script>
   <script src="scripts/popper.js"></script>
   <script src="scripts/bootstrap-material-design.js"></script>
-  <script>$("body").bootstrapMaterialDesign();</script>
+  <script>
+    $("body").bootstrapMaterialDesign();
+  </script>
   <script src="/__/firebase/7.18.0/firebase-app.js"></script>
   <script src="/__/firebase/7.18.0/firebase-analytics.js"></script>
-  <script src="/__/firebase/7.18.0/firebase-auth.js"></script>
   <script src="/__/firebase/7.18.0/firebase-firestore.js"></script>
+  <script src="/__/firebase/7.18.0/firebase-auth.js"></script>
   <script src="/__/firebase/init.js"></script>
   <script src="scripts/main.js"></script>
+  <script src="scripts/community.js"></script>
 </body>
 
 </html>

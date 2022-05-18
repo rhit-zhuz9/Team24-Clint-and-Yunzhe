@@ -17,17 +17,103 @@ rhit.FB_KEY_CONTENT = "content";
 rhit.FB_KEY_FILMID_FOR_REVIEW = "filmId";
 rhit.FB_KEY_AUTHOR = "author";
 rhit.FB_KEY_LIKES = "likes";
+
 rhit.fbFilmsManger = null;
 rhit.fbAuthManager = null;
 rhit.fbSingleFilmManager = null;
 rhit.fbReviewManager = null;
 rhit.fbReviewDetailManger = null;
+rhit.fbCommunityManager = null;
+
+rhit.FB_COLLECTION_COMMUNITY = "community";
+rhit.FB_KEY_COMMUNITYTITLE = "communityTitle";
+rhit.FB_KEY_COMMUNITYCONTENT = "communityContent";
 
 function htmlToElement(html) {
 	var template = document.createElement('template');
 	html = html.trim();
 	template.innerHTML = html;
 	return template.content.firstChild;
+}
+
+
+rhit.communityController = class {
+	constructor() {
+		document.querySelector("#menuShowAllMovies").onclick = (event) => {
+			window.location.href = "/list.html";
+		};
+
+		document.querySelector("#menuShowWatchlist").onclick = (event) => {
+			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
+		};
+
+		document.querySelector("#community").onclick = (event) => {
+			window.location.href = `/community.html`;
+		};
+
+		document.querySelector("#menuSignOut").onclick = (event) => {
+			rhit.fbAuthManager.signOut();
+		};
+
+	}
+}
+
+rhit.fbCommunityManager = class {
+	constructor(uid) {
+		this.uid = uid;
+		this._documentSnapshots = [];
+		this._ref = firebase.firestore().collection(rhit.FB_COLLECTION_COMMUNITY);
+		this._unsubscribe = null;
+	}
+
+	add(title, content) {
+		// Add a new document with a generated id.
+		this._ref.add({
+				[rhit.FB_KEY_COMMUNITYTITLE]: communityTitle,
+				[rhit.FB_KEY_COMMUNITYCONTENT]: communityContent,
+				[rhit.FB_KEY_AUTHOR]: rhit.fbAuthManager.uid,
+				[rhit.FB_KEY_LAST_TOUCHED]: firebase.firestore.Timestamp.now(),
+			})
+			.then(function (docRef) {
+				console.log("Document written with ID: ", docRef.id);
+			})
+			.catch(function (error) {
+				console.error("Error adding document: ", error);
+			});
+	}
+
+	beginListening(changeListener) {
+		let query = this._ref.orderBy(rhit.FB_KEY_LAST_TOUCHED, "desc").limit(50);
+		if (this.uid) {
+			query = query.where(rhit.FB_KEY_AUTHOR, "==", this.uid);
+		}
+		this._unsubscribe = query.onSnapshot((querySnapshot) => {
+			console.log("Community Post update!");
+			this._documentSnapshots = querySnapshot.docs;
+			// querySnapshot.forEach((doc) => {
+			// 	console.log(doc.data());
+			// });
+			changeListener();
+		});
+	}
+
+	stopListening() {
+		this._unsubscribe();
+	}
+
+	// update(id, quote, movie) {}
+	// delete(id) {}
+	get length() {
+		return this._documentSnapshots.length;
+	}
+
+	getMovieQuoteAtIndex(index) {
+		const docSnapshot = this._documentSnapshots[index];
+		const mq = new rhit.MovieQuote(docSnapshot.id,
+			docSnapshot.get(rhit.FB_KEY_COMMUNITYTITLE),
+			docSnapshot.get(rhit.FB_KEY_COMMUNITYCONTENT));
+		return mq;
+	}
 }
 
 rhit.ListPageController = class {
@@ -39,6 +125,10 @@ rhit.ListPageController = class {
 
 		document.querySelector("#menuShowWatchlist").onclick = (event) => {
 			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
+		}
+
+		document.querySelector("#community").onclick = (event) => {
+			window.location.href = `/community.html`;
 		}
 
 		document.querySelector("#menuSignOut").onclick = (event) => {
@@ -56,6 +146,22 @@ rhit.ListPageController = class {
 				$('#search').val('')
 			})
 		});
+
+		// document.querySelector("#submitAddQuote").addEventListener("click", (event) => {
+		// 	const quote = document.querySelector("#inputQuote").value;
+		// 	const movie = document.querySelector("#inputMovie").value;
+		// 	rhit.fbMovieQuotesManager.add(quote, movie);
+		// });
+
+		// $("#addQuoteDialog").on("show.bs.modal", (event) => {
+		// 	// Pre animation
+		// 	document.querySelector("#inputQuote").value = "";
+		// 	document.querySelector("#inputMovie").value = "";
+		// });
+		// $("#addQuoteDialog").on("shown.bs.modal", (event) => {
+		// 	// Post animation
+		// 	document.querySelector("#inputQuote").focus();
+		// });
 
 		rhit.fbFilmsManger.beginListening(this.updateList.bind(this))
 
@@ -221,6 +327,10 @@ rhit.DetailPageController = class {
 
 		document.querySelector("#menuShowWatchlist").onclick = (event) => {
 			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
+		};
+
+		document.querySelector("#community").onclick = (event) => {
+			window.location.href = `/community.html`;
 		};
 
 		document.querySelector("#menuSignOut").onclick = (event) => {
@@ -551,6 +661,10 @@ rhit.reviewDetailController = class {
 			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
 		};
 
+		document.querySelector("#community").onclick = (event) => {
+			window.location.href = `/community.html`;
+		};
+
 		rhit.fbReviewDetailManger.beginListening(this.updateView.bind(this));
 	}
 
@@ -612,6 +726,8 @@ rhit.FbReviewDetailManager = class {
 	}
 }
 
+
+
 rhit.initializePage = function () {
 
 	const urlParams = new URLSearchParams(window.location.search);
@@ -657,6 +773,13 @@ rhit.initializePage = function () {
 		const id = urlParams.get('id');
 		rhit.fbReviewDetailManger = new rhit.FbReviewDetailManager(id);
 		new rhit.reviewDetailController();
+	}
+
+	if (document.querySelector('#community')) {
+		console.log("You are on the community page");
+		const id = urlParams.get('id');
+		rhit.fbCommunityManager = new rhit.fbCommunityManager(id);
+		new rhit.communityController();
 	}
 }
 
