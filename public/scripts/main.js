@@ -26,14 +26,22 @@ rhit.fbReviewDetailManger = null;
 rhit.fbCommunityManager = null;
 
 rhit.FB_COLLECTION_COMMUNITY = "community";
-rhit.FB_KEY_COMMUNITYTITLE = "communityTitle";
-rhit.FB_KEY_COMMUNITYCONTENT = "communityContent";
+rhit.FB_KEY_COMMUNITYTITLE = "cTitle";
+rhit.FB_KEY_COMMUNITYCONTENT = "cContent";
 
 function htmlToElement(html) {
 	var template = document.createElement('template');
 	html = html.trim();
 	template.innerHTML = html;
 	return template.content.firstChild;
+}
+
+rhit.CommunityPost = class {
+	constructor(id, title, content) {
+		this.id = id;
+		this.title = title;
+		this.content = content;
+	}
 }
 
 
@@ -55,6 +63,60 @@ rhit.communityController = class {
 			rhit.fbAuthManager.signOut();
 		};
 
+		document.querySelector("#submitAddQuote").addEventListener("click", (event) => {
+			const title = document.querySelector("#inputTitle").value;
+			const content = document.querySelector("#inputContent").value;
+			console.log(title);
+			console.log(content);
+			rhit.fbCommunityManager.add(title, content);
+		});
+
+		$("#addQuoteDialog").on("show.bs.modal", (event) => {
+			// Pre animation
+			document.querySelector("#inputTitle").value = "";
+			document.querySelector("#inputContent").value = "";
+		});
+		$("#addQuoteDialog").on("shown.bs.modal", (event) => {
+			// Post animation
+			document.querySelector("#inputContent").focus();
+		});
+	}
+
+	updateList() {
+		console.log("I need to update the list on the page!");
+		console.log(`Num quotes = ${rhit.fbCommunityManager.length}`);
+		// console.log("Example quote = ", rhit.fbMovieQuotesManager.getMovieQuoteAtIndex(0));
+
+		// Make a new quoteListContainer
+		const newList = htmlToElement('<div id="quoteListContainer"></div>');
+		// Fill the quoteListContainer with quote cards using a loop
+		for (let i = 0; i < rhit.fbCommunityManager.length; i++) {
+			const mq = rhit.fbCommunityManager.getPostAtIndex(i);
+			const newCard = this._createCard(mq);
+			newCard.onclick = (event) => {
+				//console.log(`You clicked on ${mq.id}`);
+				// rhit.storage.setMovieQuoteId(mq.id);
+				window.location.href = `/community.html?id=${mq.id}`;
+			};
+			newList.appendChild(newCard);
+		}
+
+
+		// Remove the old quoteListContainer
+		const oldList = document.querySelector("#quoteListContainer");
+		oldList.removeAttribute("id");
+		oldList.hidden = true;
+		// Put in the new quoteListContainer
+		oldList.parentElement.appendChild(newList);
+	}
+
+	_createCard(movieQuote) {
+		return htmlToElement(`<div class="card">
+		<div class="card-body">
+			<h5 class="card-title">${CommunityPost.title}</h5>
+			<h6 class="card-subtitle mb-2 text-muted">${CommunityPost.content}</h6>
+		</div>
+	</div>`);
 	}
 }
 
@@ -69,8 +131,8 @@ rhit.fbCommunityManager = class {
 	add(title, content) {
 		// Add a new document with a generated id.
 		this._ref.add({
-				[rhit.FB_KEY_COMMUNITYTITLE]: communityTitle,
-				[rhit.FB_KEY_COMMUNITYCONTENT]: communityContent,
+				[rhit.FB_KEY_COMMUNITYTITLE]: title,
+				[rhit.FB_KEY_COMMUNITYCONTENT]: content,
 				[rhit.FB_KEY_AUTHOR]: rhit.fbAuthManager.uid,
 				[rhit.FB_KEY_LAST_TOUCHED]: firebase.firestore.Timestamp.now(),
 			})
@@ -107,9 +169,9 @@ rhit.fbCommunityManager = class {
 		return this._documentSnapshots.length;
 	}
 
-	getMovieQuoteAtIndex(index) {
+	getPostAtIndex(index) {
 		const docSnapshot = this._documentSnapshots[index];
-		const mq = new rhit.MovieQuote(docSnapshot.id,
+		const mq = new rhit.CommunityPost(docSnapshot.id,
 			docSnapshot.get(rhit.FB_KEY_COMMUNITYTITLE),
 			docSnapshot.get(rhit.FB_KEY_COMMUNITYCONTENT));
 		return mq;
@@ -146,22 +208,6 @@ rhit.ListPageController = class {
 				$('#search').val('')
 			})
 		});
-
-		// document.querySelector("#submitAddQuote").addEventListener("click", (event) => {
-		// 	const quote = document.querySelector("#inputQuote").value;
-		// 	const movie = document.querySelector("#inputMovie").value;
-		// 	rhit.fbMovieQuotesManager.add(quote, movie);
-		// });
-
-		// $("#addQuoteDialog").on("show.bs.modal", (event) => {
-		// 	// Pre animation
-		// 	document.querySelector("#inputQuote").value = "";
-		// 	document.querySelector("#inputMovie").value = "";
-		// });
-		// $("#addQuoteDialog").on("shown.bs.modal", (event) => {
-		// 	// Post animation
-		// 	document.querySelector("#inputQuote").focus();
-		// });
 
 		rhit.fbFilmsManger.beginListening(this.updateList.bind(this))
 
