@@ -24,10 +24,12 @@ rhit.fbSingleFilmManager = null;
 rhit.fbReviewManager = null;
 rhit.fbReviewDetailManger = null;
 rhit.fbCommunityManager = null;
+rhit.fbCommunityDetailManager = null;
 
 rhit.FB_COLLECTION_COMMUNITY = "community";
 rhit.FB_KEY_COMMUNITYTITLE = "cTitle";
 rhit.FB_KEY_COMMUNITYCONTENT = "cContent";
+
 
 function htmlToElement(html) {
 	var template = document.createElement('template');
@@ -44,6 +46,112 @@ rhit.CommunityPost = class {
 	}
 }
 
+rhit.communityDetailController = class {
+	constructor() {
+
+		document.querySelector("#submitEditContent").addEventListener("click", (event) => {
+			const title = document.querySelector("#inputTitle").value;
+			const content = document.querySelector("#inputContent").value;
+			rhit.fbCommunityDetailManager.update(title, content);
+		});
+
+
+		$("#editContentDialog").on("show.bs.modal", (event) => {
+			//pre animation
+			document.querySelector("#cardTitle").value = rhit.fbCommunityDetailManager.title;
+			document.querySelector("#cardContent").value = rhit.fbCommunityDetailManager.content;
+		});
+
+		$("#editContentDialog").on("shown.bs.modal", (event) => {
+			//post animation
+			document.querySelector("#cardContent").focus();
+		});
+
+		// document.querySelector("#menuCommunity").onclick = (event) => {
+		// 	window.location.href = `/community.html`;
+		// }
+
+		// document.querySelector("#menuSignOut").onclick = (event) => {
+		// 	rhit.fbAuthManager.signOut();
+		// };
+
+		// document.querySelector("#menuShowAllMovies").onclick = (event) => {
+		// 	window.location.href = "/list.html";
+		// };
+
+		// document.querySelector("#menuShowWatchlist").onclick = (event) => {
+		// 	window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
+		// };
+
+		document.querySelector("#submitDeleteContent").addEventListener("click", (event) => {
+			rhit.fbCommunityDetailManager.delete().then(() => {
+				console.log("Document successfully deleted!");
+				window.location.href = "/community.html";
+			}).catch((error) => {
+				console.error("Error removing document: ", error);
+			});
+		});
+
+		rhit.fbCommunityDetailManager.beginListening(this.updateView.bind(this));
+	}
+
+	updateView() {
+		document.querySelector("#cardTitle").innerHTML = rhit.fbCommunityDetailManager.title;
+		document.querySelector("#cardContent").innerHTML = rhit.fbCommunityDetailManager.content;
+	}
+}
+
+rhit.FbCommunityDetailManager = class {
+	constructor(communityId) {
+		this._documentSnapshot = {};
+		this._unsubscribe = null;
+		this._ref = firebase.firestore().collection(rhit.FB_COLLECTION_COMMUNITY).doc(communityId);
+	}
+
+	beginListening(changeListener) {
+
+		this._unsubscribe = this._ref.onSnapshot((doc) => {
+			if (doc.exists) {
+				this._documentSnapshot = doc;
+				changeListener();
+			} else {
+				console.log("No such document!");
+				//window.location.href = "/";
+			}
+		});
+	}
+	stopListening() {
+		this._unsubscribe();
+	}
+
+	update(title, content) {
+		this._ref.update({
+			[rhit.FB_KEY_COMMUNITYTITLE]: title,
+			[rhit.FB_KEY_COMMUNITYCONTENT]: content,
+			[rhit.FB_KEY_LAST_TOUCHED]: firebase.firestore.Timestamp.now(),
+		})
+			.then(() => {
+				console.log("Document successfully updated!");
+			})
+			.catch((error) => {
+				// The document probably doesn't exist.
+				console.error("Error updating document: ", error);
+			});
+	}
+
+	delete() {
+		return this._ref.delete();
+	}
+
+	get title() {
+		return this._documentSnapshot.get(rhit.FB_KEY_COMMUNITYTITLE);
+	}
+
+	get content() {
+		return this._documentSnapshot.get(rhit.FB_KEY_COMMUNITYCONTENT);
+	}
+}
+
 
 rhit.communityController = class {
 	constructor() {
@@ -55,7 +163,7 @@ rhit.communityController = class {
 			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
 		};
 
-		document.querySelector("#community").onclick = (event) => {
+		document.querySelector("#menuCommunity").onclick = (event) => {
 			window.location.href = `/community.html`;
 		};
 
@@ -98,7 +206,7 @@ rhit.communityController = class {
 			newCard.onclick = (event) => {
 				//console.log(`You clicked on ${mq.id}`);
 				// rhit.storage.setMovieQuoteId(mq.id);
-				window.location.href = `/community.html?id=${mq.id}`;
+				window.location.href = `/communityDetail.html?id=${mq.id}`;
 			};
 			newList.appendChild(newCard);
 		}
@@ -147,7 +255,7 @@ rhit.fbCommunityManager = class {
 	}
 
 	beginListening(changeListener) {
-		let query = this._ref.orderBy(rhit.FB_KEY_LAST_TOUCHED, "desc").limit(50);
+		let query = this._ref.orderBy(rhit.FB_KEY_COMMUNITYTITLE, "desc").limit(50);
 		if (this.uid) {
 			query = query.where(rhit.FB_KEY_AUTHOR, "==", this.uid);
 		}
@@ -191,7 +299,7 @@ rhit.ListPageController = class {
 			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
 		}
 
-		document.querySelector("#community").onclick = (event) => {
+		document.querySelector("#menuCommunity").onclick = (event) => {
 			window.location.href = `/community.html`;
 		}
 
@@ -377,7 +485,7 @@ rhit.DetailPageController = class {
 			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
 		};
 
-		document.querySelector("#community").onclick = (event) => {
+		document.querySelector("#menuCommunity").onclick = (event) => {
 			window.location.href = `/community.html`;
 		};
 
@@ -534,6 +642,10 @@ rhit.ReviewPageController = class {
 		document.querySelector("#menuShowWatchlist").onclick = (event) => {
 			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
 		}
+
+		document.querySelector("#menuCommunity").onclick = (event) => {
+			window.location.href = `/community.html`;
+		};
 
 		document.querySelector("#menuSignOut").onclick = (event) => {
 			rhit.fbAuthManager.signOut();
@@ -709,7 +821,7 @@ rhit.reviewDetailController = class {
 			window.location.href = `/list.html?uid=${rhit.fbAuthManager.uid}`;
 		};
 
-		document.querySelector("#community").onclick = (event) => {
+		document.querySelector("#menuCommunity").onclick = (event) => {
 			window.location.href = `/community.html`;
 		};
 
@@ -828,6 +940,13 @@ rhit.initializePage = function () {
 		const id = urlParams.get('id');
 		rhit.fbCommunityManager = new rhit.fbCommunityManager(id);
 		new rhit.communityController();
+	}
+
+	if (document.querySelector('#communityDetailPage')) {
+		console.log("You are on the community detail page");
+		const id = urlParams.get('id');
+		rhit.fbCommunityDetailManager = new rhit.FbCommunityDetailManager(id);
+		new rhit.communityDetailController();
 	}
 }
 
