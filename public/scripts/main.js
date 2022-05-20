@@ -61,10 +61,6 @@ rhit.communityDetailController = class {
 		};
 
 		// if (rhit.fbAuthManager.uid != "weiy5" && rhit.fbAuthManager != "zhuz9") {
-		if (rhit.fbCommunityDetailManager.author != rhit.fbAuthManager.uid) {
-			document.querySelector("#editPost").style.display = "none";
-			document.querySelector("#deletePost").style.display = "none";
-		}
 		
 		$("#editContentDialog").on("show.bs.modal", (event) => {
 			//pre animation
@@ -109,7 +105,12 @@ rhit.communityDetailController = class {
 	updateView() {
 		document.querySelector("#cardTitle").innerHTML = rhit.fbCommunityDetailManager.title;
 		document.querySelector("#cardContent").innerHTML = rhit.fbCommunityDetailManager.content;
-		document.querySelector("#cardAuthor").innerHTML = rhit.fbCommunityDetailManager.author;
+
+		if (rhit.fbCommunityDetailManager.author1 != rhit.fbAuthManager.uid) {
+			document.querySelector("#editPost").style.display = "none";
+			document.querySelector("#deletePost").style.display = "none";
+		}
+		document.querySelector("#cardAuthor").innerHTML = rhit.fbCommunityDetailManager.author1;
 	}
 }
 
@@ -162,6 +163,10 @@ rhit.FbCommunityDetailManager = class {
 
 	get content() {
 		return this._documentSnapshot.get(rhit.FB_KEY_COMMUNITYCONTENT);
+	}
+
+	get author1() {
+		return this._documentSnapshot.get(rhit.FB_KEY_AUTHOR);
 	}
 
 
