@@ -38,13 +38,14 @@ function htmlToElement(html) {
 	return template.content.firstChild;
 }
 
-// rhit.CommunityPost = class {
-// 	constructor(id, title, content) {
-// 		this.id = id;
-// 		this.title = title;
-// 		this.content = content;
-// 	}
-// }
+rhit.CommunityPost = class {
+	constructor(id, title, content, author) {
+		this.id = id;
+		this.title = title;
+		this.content = content;
+		this.author = author;
+	}
+}
 
 rhit.communityDetailController = class {
 	constructor() {
@@ -59,7 +60,8 @@ rhit.communityDetailController = class {
 			window.location.href = `/community.html`;
 		};
 
-		if (rhit.fbAuthManager.uid != "weiy5" && rhit.fbAuthManager != "zhuz9") {
+		// if (rhit.fbAuthManager.uid != "weiy5" && rhit.fbAuthManager != "zhuz9") {
+		if (rhit.fbCommunityDetailManager.author != rhit.fbAuthManager.uid) {
 			document.querySelector("#editPost").style.display = "none";
 			document.querySelector("#deletePost").style.display = "none";
 		}
@@ -68,6 +70,7 @@ rhit.communityDetailController = class {
 			//pre animation
 			document.querySelector("#cardTitle").value = rhit.fbCommunityDetailManager.title;
 			document.querySelector("#cardContent").value = rhit.fbCommunityDetailManager.content;
+			document.querySelector("#cardAuthor").value = rhit.fbCommunityDetailManager.author;
 		});
 
 		$("#editContentDialog").on("shown.bs.modal", (event) => {
@@ -106,6 +109,7 @@ rhit.communityDetailController = class {
 	updateView() {
 		document.querySelector("#cardTitle").innerHTML = rhit.fbCommunityDetailManager.title;
 		document.querySelector("#cardContent").innerHTML = rhit.fbCommunityDetailManager.content;
+		document.querySelector("#cardAuthor").innerHTML = rhit.fbCommunityDetailManager.author;
 	}
 }
 
@@ -236,6 +240,7 @@ rhit.communityController = class {
 		<div class="card-body">
 			<h5 class="card-title">${CommunityPost.title}</h5>
 			<h6 class="card-subtitle mb-2 text-muted">${CommunityPost.content}</h6>
+			<h6 class="card-subtitle mb-2 text-muted">Created By: ${CommunityPost.author}</h6>
 		</div>
 	</div>`);
 	}
@@ -294,7 +299,8 @@ rhit.fbCommunityManager = class {
 		const docSnapshot = this._documentSnapshots[index];
 		const mq = new rhit.CommunityPost(docSnapshot.id,
 			docSnapshot.get(rhit.FB_KEY_COMMUNITYTITLE),
-			docSnapshot.get(rhit.FB_KEY_COMMUNITYCONTENT));
+			docSnapshot.get(rhit.FB_KEY_COMMUNITYCONTENT),
+			docSnapshot.get(rhit.FB_KEY_AUTHOR));
 		return mq;
 	}
 }
