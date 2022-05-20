@@ -38,13 +38,13 @@ function htmlToElement(html) {
 	return template.content.firstChild;
 }
 
-rhit.CommunityPost = class {
-	constructor(id, title, content) {
-		this.id = id;
-		this.title = title;
-		this.content = content;
-	}
-}
+// rhit.CommunityPost = class {
+// 	constructor(id, title, content) {
+// 		this.id = id;
+// 		this.title = title;
+// 		this.content = content;
+// 	}
+// }
 
 rhit.communityDetailController = class {
 	constructor() {
@@ -55,7 +55,15 @@ rhit.communityDetailController = class {
 			rhit.fbCommunityDetailManager.update(title, content);
 		});
 
+		document.querySelector("#backToCommunity").onclick = (event) => {
+			window.location.href = `/community.html`;
+		};
 
+		if (rhit.fbAuthManager.uid != "weiy5" && rhit.fbAuthManager != "zhuz9") {
+			document.querySelector("#editPost").style.display = "none";
+			document.querySelector("#deletePost").style.display = "none";
+		}
+		
 		$("#editContentDialog").on("show.bs.modal", (event) => {
 			//pre animation
 			document.querySelector("#cardTitle").value = rhit.fbCommunityDetailManager.title;
@@ -106,6 +114,7 @@ rhit.FbCommunityDetailManager = class {
 		this._documentSnapshot = {};
 		this._unsubscribe = null;
 		this._ref = firebase.firestore().collection(rhit.FB_COLLECTION_COMMUNITY).doc(communityId);
+		
 	}
 
 	beginListening(changeListener) {
@@ -150,6 +159,8 @@ rhit.FbCommunityDetailManager = class {
 	get content() {
 		return this._documentSnapshot.get(rhit.FB_KEY_COMMUNITYCONTENT);
 	}
+
+
 }
 
 
@@ -831,6 +842,7 @@ rhit.reviewDetailController = class {
 	updateView() {
 		document.querySelector("#reviewContent").innerHTML = rhit.fbReviewDetailManger.content;
 		if (rhit.fbReviewDetailManger.author == rhit.fbAuthManager.uid) {
+			
 			document.querySelector("#menuEdit").style.display = "flex";
 			document.querySelector("#menuDelete").style.display = "flex";
 		}
