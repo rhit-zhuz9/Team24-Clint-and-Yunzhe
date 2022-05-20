@@ -694,9 +694,9 @@ rhit.ReviewPageController = class {
 		for (let i = 0; i < rhit.fbReviewManager.length; i++) {
 			const review = rhit.fbReviewManager.getReviewAtIndex(i);
 			const newCard = this._createdCard(review);
-			newCard.onclick = (event) => {
-				window.location.href = `/reviewDetail.html?id=${review.id}`;
-			};
+			// newCard.onclick = (event) => {
+				
+			// };
 			newList.appendChild(newCard);
 		}
 
@@ -713,10 +713,17 @@ rhit.ReviewPageController = class {
 				rhit.fbReviewManager.incLikes(reviewId, likesNum)
 			}
 		})
+
+		const texts = document.querySelectorAll(".review-text");
+		texts.forEach((text) => {
+			text.onclick = (event) => {
+				window.location.href = `/reviewDetail.html?id=${text.id}`;
+			}
+		});
 	}
 
 	_createdCard(review) {
-		return htmlToElement(`<div class="review-content"><p id="${review.id}">${review.content}</p><p class="likes">
+		return htmlToElement(`<div class="review-content"><p class="review-text" id="${review.id}">${review.content}</p><p class="likes">
 		<i class="material-icons like-button" data-review-id="${review.id}" data-likes-num=${review.likes}>favorite</i>&nbsp;&nbsp;${review.likes}</p></div>`);
 	}
 }
